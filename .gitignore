@@ -1,0 +1,16 @@
+cat <<EOF > .gitignore
+# Go
+bin/
+*.exe
+*.log
+*.test
+*.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env
+.env
+EOF
