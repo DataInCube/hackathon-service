@@ -1,0 +1,607 @@
+basePath: /api/v1
+definitions:
+  models.HTTPError:
+    description: HTTP error response
+    properties:
+      code:
+        description: HTTP status code
+        example: 400
+        type: integer
+      message:
+        description: Error message
+        example: Bad request
+        type: string
+    type: object
+  models.Hackathon:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      max_members:
+        type: integer
+      max_teams:
+        type: integer
+      start_date:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Participant:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      hackathon_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        description: ID venant de Keycloak
+        type: string
+    type: object
+  models.Registration:
+    properties:
+      created_at:
+        type: string
+      hackathon_id:
+        type: integer
+      id:
+        type: integer
+      participant_id:
+        type: integer
+      team_id:
+        description: Peut être nul si pas encore assigné
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.Team:
+    properties:
+      created_at:
+        type: string
+      hackathon_id:
+        type: integer
+      id:
+        type: integer
+      lead_id:
+        description: FK vers Participant
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Hackathon microservice API documentation with Swagger
+  title: Hackathon API
+  version: "1.0"
+paths:
+  /hackathons:
+    get:
+      description: Get a list of all hackathons
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Hackathon'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: List all hackathons
+      tags:
+      - Hackathon
+    post:
+      consumes:
+      - application/json
+      description: Create a new hackathon with JSON payload
+      parameters:
+      - description: Hackathon payload
+        in: body
+        name: hackathon
+        required: true
+        schema:
+          $ref: '#/definitions/models.Hackathon'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Hackathon'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Create a new hackathon
+      tags:
+      - Hackathon
+  /hackathons/{id}:
+    delete:
+      description: Delete a hackathon by its ID
+      parameters:
+      - description: Hackathon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Delete a hackathon by ID
+      tags:
+      - Hackathon
+    get:
+      description: Get a hackathon by its ID
+      parameters:
+      - description: Hackathon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Hackathon'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Get a hackathon by ID
+      tags:
+      - Hackathon
+    put:
+      consumes:
+      - application/json
+      description: Update a hackathon by its ID with JSON payload
+      parameters:
+      - description: Hackathon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Hackathon payload
+        in: body
+        name: hackathon
+        required: true
+        schema:
+          $ref: '#/definitions/models.Hackathon'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Hackathon'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Update a hackathon by ID
+      tags:
+      - Hackathon
+  /participants:
+    get:
+      description: Get a list of all participants
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Participant'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: List all participants
+      tags:
+      - Participant
+    post:
+      consumes:
+      - application/json
+      description: Create a new participant with JSON payload
+      parameters:
+      - description: Participant payload
+        in: body
+        name: participant
+        required: true
+        schema:
+          $ref: '#/definitions/models.Participant'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Participant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Create a new participant
+      tags:
+      - Participant
+  /participants/{id}:
+    delete:
+      description: Delete a participant by its ID
+      parameters:
+      - description: Participant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Delete a participant by ID
+      tags:
+      - Participant
+    get:
+      description: Get a participant by its ID
+      parameters:
+      - description: Participant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Participant'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Get a participant by ID
+      tags:
+      - Participant
+    put:
+      consumes:
+      - application/json
+      description: Update a participant by its ID with JSON payload
+      parameters:
+      - description: Participant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Participant payload
+        in: body
+        name: participant
+        required: true
+        schema:
+          $ref: '#/definitions/models.Participant'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Participant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Update a participant by ID
+      tags:
+      - Participant
+  /registrations:
+    get:
+      description: Get a list of all registrations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Registration'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: List all registrations
+      tags:
+      - Registration
+    post:
+      consumes:
+      - application/json
+      description: Register a participant for a hackathon with JSON payload
+      parameters:
+      - description: Registration payload
+        in: body
+        name: registration
+        required: true
+        schema:
+          $ref: '#/definitions/models.Registration'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Registration'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Register a participant for a hackathon
+      tags:
+      - Registration
+  /registrations/{id}:
+    delete:
+      description: Delete a registration by its ID
+      parameters:
+      - description: Registration ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Delete a registration by ID
+      tags:
+      - Registration
+    get:
+      description: Get a registration by its ID
+      parameters:
+      - description: Registration ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Registration'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Get a registration by ID
+      tags:
+      - Registration
+  /teams:
+    get:
+      description: Get a list of all teams
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Team'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: List all teams
+      tags:
+      - Team
+    post:
+      consumes:
+      - application/json
+      description: Create a team with JSON payload
+      parameters:
+      - description: Team payload
+        in: body
+        name: team
+        required: true
+        schema:
+          $ref: '#/definitions/models.Team'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Team'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Create a team
+      tags:
+      - Team
+  /teams/{id}:
+    delete:
+      description: Delete a team by its ID
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Delete a team by ID
+      tags:
+      - Team
+    get:
+      description: Get a team by its ID
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Get a team by ID
+      tags:
+      - Team
+    put:
+      consumes:
+      - application/json
+      description: Update a team by its ID
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Team payload
+        in: body
+        name: team
+        required: true
+        schema:
+          $ref: '#/definitions/models.Team'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Team'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.HTTPError'
+      summary: Update a team by ID
+      tags:
+      - Team
+swagger: "2.0"
