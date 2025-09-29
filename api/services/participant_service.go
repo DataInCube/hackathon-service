@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	
+
 	"github.com/DataInCube/hackathon-service/internal/models"
 )
 
@@ -16,12 +16,16 @@ func NewParticipantService(db *sql.DB) *ParticipantService {
 	return &ParticipantService{DB: db}
 }
 
-func (s *ParticipantService) Create(ctx context.Context, p models.Participant) error {
+func (s *ParticipantService) Create(ctx context.Context, p models.Participant) (int64, error) {
 	query := `INSERT INTO participants (name, email, user_id, created_at, updated_at)
-	          VALUES ($1, $2, $3, NOW(), NOW())`
+	          VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 
-	_, err := s.DB.ExecContext(ctx, query, p.Name, p.Email, p.UserID)
-	return err
+	var id int64
+	err := s.DB.QueryRowContext(ctx, query, p.Name, p.Email, p.UserID).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 func (s *ParticipantService) GetByID(ctx context.Context, id uint) (*models.Participant, error) {

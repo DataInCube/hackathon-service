@@ -225,6 +225,21 @@ paths:
       summary: Update a hackathon by ID
       tags:
       - Hackathon
+  /health:
+    get:
+      description: Check if service is alive
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - system
   /participants:
     get:
       description: Get a list of all participants
@@ -364,6 +379,27 @@ paths:
       summary: Update a participant by ID
       tags:
       - Participant
+  /ready:
+    get:
+      description: Check if service is ready (DB connection etc.)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Readiness check
+      tags:
+      - system
   /registrations:
     get:
       description: Get a list of all registrations

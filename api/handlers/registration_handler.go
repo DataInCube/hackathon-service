@@ -6,6 +6,7 @@ import (
 
 	"github.com/DataInCube/hackathon-service/api/services"
 	"github.com/DataInCube/hackathon-service/internal/models"
+	"github.com/DataInCube/hackathon-service/pkg/errors"
 	"github.com/labstack/echo/v4"
 )
 
@@ -25,16 +26,16 @@ func NewRegistrationHandler(s *services.RegistrationService) *RegistrationHandle
 // @Produce  json
 // @Param registration body models.Registration true "Registration payload"
 // @Success 201 {object} models.Registration
-// @Failure 400 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 400 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /registrations [post]
 func (h *RegistrationHandler) Register(c echo.Context) error {
 	var r models.Registration
 	if err := c.Bind(&r); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
 	}
-	if err := h.Service.Register(c.Request().Context(), r); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	if _, err := h.Service.Register(c.Request().Context(), r); err != nil {
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, r)
 }
@@ -45,12 +46,12 @@ func (h *RegistrationHandler) Register(c echo.Context) error {
 // @Tags Registration
 // @Produce  json
 // @Success 200 {array} models.Registration
-// @Failure 500 {object} models.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /registrations [get]
 func (h *RegistrationHandler) List(c echo.Context) error {
-	rs, err := h.Service.GetAll(c.Request().Context())
+	rs, err := h.Service.GetAllRegistrations(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, rs)
 }
@@ -62,17 +63,17 @@ func (h *RegistrationHandler) List(c echo.Context) error {
 // @Produce  json
 // @Param id path int true "Registration ID"
 // @Success 200 {object} models.Registration
-// @Failure 404 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 404 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /registrations/{id} [get]
 func (h *RegistrationHandler) GetByID(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	r, err := h.Service.GetByID(c.Request().Context(), uint(id))
+	r, err := h.Service.GetRegistrationByID(c.Request().Context(), uint(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	if r == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Registration not found")
+		return c.JSON(http.StatusNotFound, errors.HTTPError{Code: http.StatusNotFound, Message: "Registration not found"})	
 	}
 	return c.JSON(http.StatusOK, r)
 }
@@ -83,13 +84,13 @@ func (h *RegistrationHandler) GetByID(c echo.Context) error {
 // @Tags Registration
 // @Param id path int true "Registration ID"
 // @Success 200 {object} map[string]string
-// @Failure 404 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 404 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /registrations/{id} [delete]
 func (h *RegistrationHandler) Delete(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	if err := h.Service.Delete(c.Request().Context(), uint(id)); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	if err := h.Service.DeleteRegistration(c.Request().Context(), uint(id)); err != nil {
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "Deleted"})
 }

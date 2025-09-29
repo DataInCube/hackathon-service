@@ -16,12 +16,16 @@ func NewHackathonService(db *sql.DB) *HackathonService {
 	return &HackathonService{DB: db}
 }
 
-func (s *HackathonService) CreateHackathon(ctx context.Context, h models.Hackathon) error {
+func (s *HackathonService) CreateHackathon(ctx context.Context, h models.Hackathon) (int64, error) {
 	query := `INSERT INTO hackathons (title, description, start_date, end_date, created_at, updated_at)
-	          VALUES ($1, $2, $3, $4, NOW(), NOW())`
+	          VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id`
 
-	_, err := s.DB.ExecContext(ctx, query, h.Title, h.Description, h.StartDate, h.EndDate)
-	return err
+	var id int64
+	err := s.DB.QueryRowContext(ctx, query, h.Title, h.Description, h.StartDate, h.EndDate).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 func (s *HackathonService) GetAllHackathons(ctx context.Context) ([]models.Hackathon, error) {

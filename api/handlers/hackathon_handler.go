@@ -6,6 +6,7 @@ import (
 
 	"github.com/DataInCube/hackathon-service/api/services"
 	"github.com/DataInCube/hackathon-service/internal/models"
+	"github.com/DataInCube/hackathon-service/pkg/errors"
 	"github.com/labstack/echo/v4"
 )
 
@@ -25,15 +26,15 @@ func NewHackathonHandler(s *services.HackathonService) *HackathonHandler {
 // @Produce  json
 // @Param hackathon body models.Hackathon true "Hackathon payload"
 // @Success 201 {object} models.Hackathon
-// @Failure 400 {object} models.HTTPError
+// @Failure 400 {object} errors.HTTPError
 // @Router /hackathons [post]
 func (h *HackathonHandler) Create(c echo.Context) error {
 	var input models.Hackathon
 	if err := c.Bind(&input); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
 	}
-	if err := h.Service.CreateHackathon(c.Request().Context(), input); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	if _, err := h.Service.CreateHackathon(c.Request().Context(), input); err != nil {
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, input)
 }
@@ -49,7 +50,7 @@ func (h *HackathonHandler) Create(c echo.Context) error {
 func (h *HackathonHandler) List(c echo.Context) error {
 	hackathons, err := h.Service.GetAllHackathons(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, hackathons)
 }
@@ -68,10 +69,10 @@ func (h *HackathonHandler) GetByID(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	hackathon, err := h.Service.GetHackathonByID(c.Request().Context(), uint(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	if hackathon == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Hackathon not found")
+		return c.JSON(http.StatusNotFound, errors.HTTPError{Code: http.StatusNotFound, Message: "Hackathon not found"})
 	}
 	return c.JSON(http.StatusOK, hackathon)
 }
@@ -93,11 +94,11 @@ func (h *HackathonHandler) Update(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var input models.Hackathon
 	if err := c.Bind(&input); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 	input.ID = uint(id)
 	if err := h.Service.UpdateHackathon(c.Request().Context(), input); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, input)
 }
@@ -114,7 +115,7 @@ func (h *HackathonHandler) Update(c echo.Context) error {
 func (h *HackathonHandler) Delete(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := h.Service.DeleteHackathon(c.Request().Context(), uint(id)); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "Deleted"})
 }

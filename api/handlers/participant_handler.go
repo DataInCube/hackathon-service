@@ -3,8 +3,10 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+
 	"github.com/DataInCube/hackathon-service/api/services"
 	"github.com/DataInCube/hackathon-service/internal/models"
+	"github.com/DataInCube/hackathon-service/pkg/errors"
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,16 +26,16 @@ func NewParticipantHandler(s *services.ParticipantService) *ParticipantHandler {
 // @Produce  json
 // @Param participant body models.Participant true "Participant payload"
 // @Success 201 {object} models.Participant
-// @Failure 400 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 400 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /participants [post]
 func (h *ParticipantHandler) Create(c echo.Context) error {
 	var p models.Participant
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
 	}
-	if err := h.Service.Create(c.Request().Context(), p); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	if _, err := h.Service.Create(c.Request().Context(), p); err != nil {
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, p)
 }
@@ -44,12 +46,12 @@ func (h *ParticipantHandler) Create(c echo.Context) error {
 // @Tags Participant
 // @Produce  json
 // @Success 200 {array} models.Participant
-// @Failure 500 {object} models.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /participants [get]
 func (h *ParticipantHandler) List(c echo.Context) error {
 	ps, err := h.Service.GetAll(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, ps)
 }
@@ -61,17 +63,17 @@ func (h *ParticipantHandler) List(c echo.Context) error {
 // @Produce  json
 // @Param id path int true "Participant ID"
 // @Success 200 {object} models.Participant
-// @Failure 404 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 404 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /participants/{id} [get]
 func (h *ParticipantHandler) GetByID(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	p, err := h.Service.GetByID(c.Request().Context(), uint(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	if p == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Participant not found")
+		return c.JSON(http.StatusNotFound, errors.HTTPError{Code: http.StatusNotFound, Message: "Participant not found"})
 	}
 	return c.JSON(http.StatusOK, p)
 }
@@ -85,19 +87,19 @@ func (h *ParticipantHandler) GetByID(c echo.Context) error {
 // @Param id path int true "Participant ID"
 // @Param participant body models.Participant true "Participant payload"
 // @Success 200 {object} models.Participant
-// @Failure 400 {object} models.HTTPError
-// @Failure 404 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 400 {object} errors.HTTPError
+// @Failure 404 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /participants/{id} [put]
 func (h *ParticipantHandler) Update(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var p models.Participant
 	if err := c.Bind(&p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 	p.ID = uint(id)
 	if err := h.Service.Update(c.Request().Context(), p); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, p)
 }
@@ -108,13 +110,13 @@ func (h *ParticipantHandler) Update(c echo.Context) error {
 // @Tags Participant
 // @Param id path int true "Participant ID"
 // @Success 200 {object} map[string]string
-// @Failure 404 {object} models.HTTPError
-// @Failure 500 {object} models.HTTPError
+// @Failure 404 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
 // @Router /participants/{id} [delete]
 func (h *ParticipantHandler) Delete(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := h.Service.Delete(c.Request().Context(), uint(id)); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "Deleted"})
 }

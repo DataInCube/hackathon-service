@@ -38,3 +38,12 @@ CREATE TABLE registrations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    sender_id INT NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
+    team_id INT REFERENCES teams(id) ON DELETE CASCADE,
+    hackathon_id INT REFERENCES hackathons(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
