@@ -39,6 +39,7 @@ CREATE TABLE registrations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table: chat
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     sender_id INT NOT NULL REFERENCES participants(id) ON DELETE CASCADE,

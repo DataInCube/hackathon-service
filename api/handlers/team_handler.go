@@ -30,14 +30,19 @@ func NewTeamHandler(s *services.TeamService) *TeamHandler {
 // @Failure 500 {object} errors.HTTPError
 // @Router /teams [post]
 func (h *TeamHandler) Create(c echo.Context) error {
-	var t models.Team
-	if err := c.Bind(&t); err != nil {
+	type Req struct {
+		Team               models.Team `json:"team"`
+		MemberGitUsernames []string    `json:"members"` // GitHub usernames
+	}
+	var req Req
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
 	}
-	if _, err := h.Service.CreateTeam(c.Request().Context(), t); err != nil {
+	team, err := h.Service.CreateTeam(c.Request().Context(), req.Team, req.MemberGitUsernames)
+	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, t)
+	return c.JSON(http.StatusCreated, team)
 }
 
 // List godoc
@@ -119,4 +124,33 @@ func (h *TeamHandler) Delete(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "Deleted"})
+}
+
+// TransferLead godoc
+// @Summary Transfer team lead to another member
+// @Description Change the lead of a team
+// @Tags Team
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Team ID"
+// @Param new_lead body map[string]uint true "New lead ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} errors.HTTPError
+// @Failure 500 {object} errors.HTTPError
+// @Router /teams/{id}/transfer-lead [patch]
+func (h *TeamHandler) TransferLead(c echo.Context) error {
+    teamID, _ := strconv.Atoi(c.Param("id"))
+
+    var payload struct {
+        NewLeadID uint `json:"new_lead_id"`
+    }
+    if err := c.Bind(&payload); err != nil {
+        return c.JSON(http.StatusBadRequest, errors.HTTPError{Code: http.StatusBadRequest, Message: err.Error()})
+    }
+
+    if err := h.Service.TransferLead(c.Request().Context(), uint(teamID), payload.NewLeadID); err != nil {
+        return c.JSON(http.StatusInternalServerError, errors.HTTPError{Code: http.StatusInternalServerError, Message: err.Error()})
+    }
+
+    return c.JSON(http.StatusOK, map[string]string{"message": "Team lead transferred successfully"})
 }

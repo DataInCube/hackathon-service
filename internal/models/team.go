@@ -9,6 +9,7 @@ type Team struct {
 	Name        string    `json:"name"`
 	HackathonID uint      `json:"hackathon_id"`
 	LeadID      uint      `json:"lead_id"` // FK vers Participant
+	RepoURL    string    `json:"repo_url,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
