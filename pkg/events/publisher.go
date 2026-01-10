@@ -79,8 +79,16 @@ func (p *NatsPublisher) Publish(ctx context.Context, subject string, payload any
 	if err != nil {
 		return err
 	}
-	_, err = p.js.Publish(subject, b)
-	return err
+	ack, err := p.js.PublishAsync(subject, b)
+	if err != nil {
+		return err
+	}
+	if ack != nil {
+		go func() {
+			_ = ack.Ok()
+		}()
+	}
+	return nil
 }
 
 func (p *NatsPublisher) Close() {
