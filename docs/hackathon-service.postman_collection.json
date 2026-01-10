@@ -1,0 +1,493 @@
+{
+  "info": {
+    "name": "hackathon-service API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_SERVICE", "value": "http://localhost:8081" },
+    { "key": "TOKEN_ADMIN", "value": "" },
+    { "key": "TOKEN_USER", "value": "" },
+    { "key": "TOKEN_EVAL", "value": "" },
+    { "key": "HACKATHON_ID", "value": "" },
+    { "key": "TRACK_ID", "value": "" },
+    { "key": "RULE_ID", "value": "" },
+    { "key": "RULE_VERSION_ID", "value": "" },
+    { "key": "SUBMISSION_ID", "value": "" },
+    { "key": "RESOURCE_ID", "value": "" },
+    { "key": "TEAM_ID", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": "{{BASE_SERVICE}}/health" } },
+        { "name": "Version", "request": { "method": "GET", "url": "{{BASE_SERVICE}}/version" } },
+        { "name": "Ready", "request": { "method": "GET", "url": "{{BASE_SERVICE}}/ready" } },
+        { "name": "Metrics", "request": { "method": "GET", "url": "{{BASE_SERVICE}}/metrics" } }
+      ]
+    },
+    {
+      "name": "Hackathons",
+      "item": [
+        {
+          "name": "Create Hackathon (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"AI Hack 2026\",\n  \"description\": \"Demo event\",\n  \"visibility\": \"public\",\n  \"starts_at\": \"2026-02-01T09:00:00Z\",\n  \"ends_at\": \"2026-02-03T18:00:00Z\",\n  \"allows_teams\": true,\n  \"requires_teams\": true,\n  \"min_team_size\": 2,\n  \"max_team_size\": 5,\n  \"metadata\": { \"theme\": \"ai\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "List Hackathons",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons?limit=10&offset=0"
+          }
+        },
+        {
+          "name": "Get Hackathon",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}"
+          }
+        },
+        {
+          "name": "Update Hackathon (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"AI Hack 2026 - Updated\",\n  \"description\": \"Updated description\",\n  \"visibility\": \"public\",\n  \"starts_at\": \"2026-02-01T09:00:00Z\",\n  \"ends_at\": \"2026-02-03T18:00:00Z\",\n  \"allows_teams\": true,\n  \"requires_teams\": true,\n  \"min_team_size\": 2,\n  \"max_team_size\": 5,\n  \"metadata\": { \"theme\": \"ai\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Hackathon (Admin, draft only)",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}"
+          }
+        },
+        {
+          "name": "Publish Hackathon (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/publish"
+          }
+        },
+        {
+          "name": "Transition Hackathon Phase (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/transition",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_phase\": \"warmup\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Hackathon State",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/state"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tracks",
+      "item": [
+        {
+          "name": "Create Track (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/tracks",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"AI Agents\",\n  \"description\": \"Agentic workflows\"\n}" }
+          }
+        },
+        {
+          "name": "List Tracks",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/tracks?limit=10&offset=0"
+          }
+        },
+        {
+          "name": "Get Track",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/tracks/{{TRACK_ID}}"
+          }
+        },
+        {
+          "name": "Update Track (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/tracks/{{TRACK_ID}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"AI Agents - Updated\",\n  \"description\": \"Updated description\",\n  \"is_active\": true\n}" }
+          }
+        },
+        {
+          "name": "Delete Track (Admin)",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/tracks/{{TRACK_ID}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rules",
+      "item": [
+        {
+          "name": "List Rules by Hackathon",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/rules?limit=10&offset=0"
+          }
+        },
+        {
+          "name": "Create Rule (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/rules",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"General Rules\",\n  \"description\": \"v1 rules\",\n  \"track_id\": \"{{TRACK_ID}}\",\n  \"content\": { \"repo_required\": true, \"max_team_size\": 5 }\n}" }
+          }
+        },
+        {
+          "name": "Get Rule",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/{{RULE_ID}}"
+          }
+        },
+        {
+          "name": "Update Rule (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/{{RULE_ID}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"General Rules - Updated\",\n  \"description\": \"Updated\",\n  \"track_id\": \"{{TRACK_ID}}\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Rule (Admin)",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/{{RULE_ID}}"
+          }
+        },
+        {
+          "name": "Create Rule Version (version)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/{{RULE_ID}}/version",
+            "body": { "mode": "raw", "raw": "{\n  \"content\": { \"repo_required\": true, \"max_team_size\": 4 }\n}" }
+          }
+        },
+        {
+          "name": "Create Rule Version (versions)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/{{RULE_ID}}/versions",
+            "body": { "mode": "raw", "raw": "{\n  \"content\": { \"repo_required\": true, \"max_team_size\": 4 }\n}" }
+          }
+        },
+        {
+          "name": "Lock Rule Version (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/versions/{{RULE_VERSION_ID}}/lock"
+          }
+        },
+        {
+          "name": "Rule History",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/rules/{{RULE_ID}}/history?limit=10&offset=0"
+          }
+        },
+        {
+          "name": "Activate Rule Version (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/rules/{{RULE_VERSION_ID}}/activate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Team Policy",
+      "item": [
+        {
+          "name": "Get Team Policy",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/team-policy"
+          }
+        },
+        {
+          "name": "Validate Team",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/teams/validate",
+            "body": { "mode": "raw", "raw": "{\n  \"team_id\": \"{{TEAM_ID}}\",\n  \"member_count\": 4\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submissions",
+      "item": [
+        {
+          "name": "Create Submission (User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/submissions",
+            "body": { "mode": "raw", "raw": "{\n  \"track_id\": \"{{TRACK_ID}}\",\n  \"team_id\": \"{{TEAM_ID}}\",\n  \"member_count\": 4,\n  \"metadata\": { \"repo_url\": \"https://github.com/org/project\", \"commit\": \"abc123\" }\n}" }
+          }
+        },
+        {
+          "name": "List Submissions",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/submissions?limit=10&offset=0"
+          }
+        },
+        {
+          "name": "Get Submission",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}"
+          }
+        },
+        {
+          "name": "Update Submission (Owner/Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}",
+            "body": { "mode": "raw", "raw": "{\n  \"team_id\": \"{{TEAM_ID}}\",\n  \"member_count\": 4,\n  \"metadata\": { \"notes\": \"updated\" }\n}" }
+          }
+        },
+        {
+          "name": "Delete Submission (Owner/Admin)",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}"
+          }
+        },
+        {
+          "name": "Lock Submission (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}/lock"
+          }
+        },
+        {
+          "name": "Invalidate Submission (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}/invalidate"
+          }
+        },
+        {
+          "name": "Evaluation Start (Eval Role)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_EVAL}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}/evaluation/start",
+            "body": { "mode": "raw", "raw": "{\n  \"metadata\": { \"worker\": \"evaluation-service\" }\n}" }
+          }
+        },
+        {
+          "name": "Evaluation Fail (Eval Role)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_EVAL}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}/evaluation/fail",
+            "body": { "mode": "raw", "raw": "{\n  \"metadata\": { \"error\": \"timeout\" }\n}" }
+          }
+        },
+        {
+          "name": "Evaluation Score (Eval Role)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_EVAL}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/submissions/{{SUBMISSION_ID}}/evaluation/score",
+            "body": { "mode": "raw", "raw": "{\n  \"metadata\": { \"score\": 92.5 }\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leaderboard",
+      "item": [
+        {
+          "name": "Get Leaderboard Policy",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/leaderboard-policy"
+          }
+        },
+        {
+          "name": "Freeze Leaderboard (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/leaderboard/freeze"
+          }
+        },
+        {
+          "name": "Unfreeze Leaderboard (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/leaderboard/unfreeze"
+          }
+        },
+        {
+          "name": "Publish Leaderboard (Admin)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/leaderboard/publish"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources",
+      "item": [
+        {
+          "name": "Create Resource (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/resources",
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"dataset\",\n  \"title\": \"Training Data\",\n  \"url\": \"https://example.com/data.zip\"\n}" }
+          }
+        },
+        {
+          "name": "List Resources",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/resources?limit=10&offset=0"
+          }
+        },
+        {
+          "name": "Get Resource",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/resources/{{RESOURCE_ID}}"
+          }
+        },
+        {
+          "name": "Update Resource (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/resources/{{RESOURCE_ID}}",
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Training Data - Updated\",\n  \"url\": \"https://example.com/data-v2.zip\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Resource (Admin)",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/resources/{{RESOURCE_ID}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Governance",
+      "item": [
+        {
+          "name": "Create Report (User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/hackathons/{{HACKATHON_ID}}/reports",
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"abuse\",\n  \"content\": \"Suspicious submission\"\n}" }
+          }
+        },
+        {
+          "name": "Create Appeal (User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_USER}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/appeals",
+            "body": { "mode": "raw", "raw": "{\n  \"submission_id\": \"{{SUBMISSION_ID}}\",\n  \"content\": \"Please re-evaluate\"\n}" }
+          }
+        },
+        {
+          "name": "Audit Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{TOKEN_ADMIN}}" }] },
+            "url": "{{BASE_SERVICE}}/api/v1/audit/hackathons/{{HACKATHON_ID}}?limit=10&offset=0"
+          }
+        }
+      ]
+    }
+  ]
+}
