@@ -143,3 +143,7 @@ Resources and governance
 ## Supporting files
 - Scope boundaries: docs/SCOPE_BOUNDARY.md
 - Postman collection: docs/hackathon-service.postman_collection.json
+
+## Tests
+- Unit tests cover lifecycle validation, transition rules, and submission status transitions.
+- Run: `go test ./...`
