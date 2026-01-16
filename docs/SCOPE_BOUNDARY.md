@@ -12,6 +12,8 @@ leaderboards.
 - Team policy declaration and validation (requires/limits team size)
 - Leaderboard policy declaration and freeze/publish requests (no ranking logic)
 - Resources
+- Data definitions (dataset metadata, files, variables, response schema)
+- Evaluation metric definitions and submission limits
 - Governance: reports, appeals, and audit log
 - Domain events to NATS JetStream (hackathon.* and submission.*)
 
@@ -33,3 +35,4 @@ leaderboards.
 - `hackathon.rule.created`, `hackathon.rule.activated`
 - `submission.created`, `submission.locked`, `submission.invalidated`
 - `leaderboard.freeze.requested`, `leaderboard.publish.requested`
+- `hackathon.data.*`, `hackathon.metric.*`, `hackathon.submission_limits.*`

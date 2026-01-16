@@ -28,6 +28,83 @@ CREATE TABLE hackathons (
 
 CREATE INDEX hackathons_state_idx ON hackathons (state);
 
+CREATE TABLE hackathon_datasets (
+    id UUID PRIMARY KEY,
+    hackathon_id UUID NOT NULL UNIQUE REFERENCES hackathons(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    source_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+    response_schema JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX hackathon_datasets_hackathon_id_idx ON hackathon_datasets (hackathon_id);
+
+CREATE TABLE dataset_files (
+    id UUID PRIMARY KEY,
+    dataset_id UUID NOT NULL REFERENCES hackathon_datasets(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    description TEXT,
+    url TEXT NOT NULL,
+    size_bytes BIGINT,
+    checksum TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (dataset_id, name)
+);
+
+CREATE INDEX dataset_files_dataset_id_idx ON dataset_files (dataset_id);
+
+CREATE TABLE dataset_variables (
+    id UUID PRIMARY KEY,
+    dataset_id UUID NOT NULL REFERENCES hackathon_datasets(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    data_type TEXT NOT NULL,
+    description TEXT,
+    unit TEXT,
+    category TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (dataset_id, name)
+);
+
+CREATE INDEX dataset_variables_dataset_id_idx ON dataset_variables (dataset_id);
+
+CREATE TABLE evaluation_metrics (
+    id UUID PRIMARY KEY,
+    hackathon_id UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    metric_type TEXT NOT NULL,
+    direction TEXT NOT NULL,
+    scope TEXT NOT NULL DEFAULT 'overall',
+    target_variable TEXT,
+    weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+    description TEXT,
+    params JSONB NOT NULL DEFAULT '{}'::jsonb,
+    is_primary BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (hackathon_id, name)
+);
+
+CREATE INDEX evaluation_metrics_hackathon_id_idx ON evaluation_metrics (hackathon_id);
+
+CREATE TABLE submission_limits (
+    id UUID PRIMARY KEY,
+    hackathon_id UUID NOT NULL UNIQUE REFERENCES hackathons(id) ON DELETE CASCADE,
+    per_day INTEGER NOT NULL DEFAULT 0,
+    total INTEGER NOT NULL DEFAULT 0,
+    per_team INTEGER NOT NULL DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX submission_limits_hackathon_id_idx ON submission_limits (hackathon_id);
+
 CREATE TABLE tracks (
     id UUID PRIMARY KEY,
     hackathon_id UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE,

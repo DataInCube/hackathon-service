@@ -22,6 +22,9 @@ func RegisterRoutes(e *echo.Echo, db *sql.DB, logger *logrus.Logger, authMiddlew
 	ruleService := services.NewRuleService(db)
 	submissionService := services.NewSubmissionService(db, trackService)
 	resourceService := services.NewResourceService(db)
+	datasetService := services.NewDatasetService(db)
+	metricService := services.NewMetricService(db)
+	submissionLimitService := services.NewSubmissionLimitService(db)
 	governanceService := services.NewGovernanceService(db)
 
 	// Injecter les handlers
@@ -30,6 +33,9 @@ func RegisterRoutes(e *echo.Echo, db *sql.DB, logger *logrus.Logger, authMiddlew
 	ruleHandler := handlers.NewRuleHandler(ruleService, hackathonService, governanceService, publisher)
 	submissionHandler := handlers.NewSubmissionHandler(submissionService, governanceService, publisher)
 	resourceHandler := handlers.NewResourceHandler(resourceService, governanceService)
+	dataHandler := handlers.NewDataHandler(datasetService, governanceService, publisher)
+	metricHandler := handlers.NewMetricHandler(metricService, governanceService, publisher)
+	submissionLimitHandler := handlers.NewSubmissionLimitHandler(submissionLimitService, governanceService, publisher)
 	governanceHandler := handlers.NewGovernanceHandler(governanceService)
 
 	// Routes protégées par authentification
@@ -96,6 +102,35 @@ func RegisterRoutes(e *echo.Echo, db *sql.DB, logger *logrus.Logger, authMiddlew
 	api.GET("/hackathons/:hackathonId/resources/:resourceId", resourceHandler.GetByID)
 	api.PUT("/hackathons/:hackathonId/resources/:resourceId", resourceHandler.Update, adminOrOrganizer)
 	api.DELETE("/hackathons/:hackathonId/resources/:resourceId", resourceHandler.Delete, adminOrOrganizer)
+
+	// Data (datasets, files, variables)
+	api.POST("/hackathons/:hackathonId/data", dataHandler.Create, adminOrOrganizer)
+	api.GET("/hackathons/:hackathonId/data", dataHandler.Get)
+	api.PUT("/hackathons/:hackathonId/data", dataHandler.Update, adminOrOrganizer)
+	api.DELETE("/hackathons/:hackathonId/data", dataHandler.Delete, adminOrOrganizer)
+	api.POST("/hackathons/:hackathonId/data/files", dataHandler.CreateFile, adminOrOrganizer)
+	api.GET("/hackathons/:hackathonId/data/files", dataHandler.ListFiles)
+	api.GET("/hackathons/:hackathonId/data/files/:fileId", dataHandler.GetFile)
+	api.PUT("/hackathons/:hackathonId/data/files/:fileId", dataHandler.UpdateFile, adminOrOrganizer)
+	api.DELETE("/hackathons/:hackathonId/data/files/:fileId", dataHandler.DeleteFile, adminOrOrganizer)
+	api.POST("/hackathons/:hackathonId/data/variables", dataHandler.CreateVariable, adminOrOrganizer)
+	api.GET("/hackathons/:hackathonId/data/variables", dataHandler.ListVariables)
+	api.GET("/hackathons/:hackathonId/data/variables/:variableId", dataHandler.GetVariable)
+	api.PUT("/hackathons/:hackathonId/data/variables/:variableId", dataHandler.UpdateVariable, adminOrOrganizer)
+	api.DELETE("/hackathons/:hackathonId/data/variables/:variableId", dataHandler.DeleteVariable, adminOrOrganizer)
+
+	// Evaluation metrics
+	api.POST("/hackathons/:hackathonId/metrics", metricHandler.Create, adminOrOrganizer)
+	api.GET("/hackathons/:hackathonId/metrics", metricHandler.List)
+	api.GET("/hackathons/:hackathonId/metrics/:metricId", metricHandler.GetByID)
+	api.PUT("/hackathons/:hackathonId/metrics/:metricId", metricHandler.Update, adminOrOrganizer)
+	api.DELETE("/hackathons/:hackathonId/metrics/:metricId", metricHandler.Delete, adminOrOrganizer)
+
+	// Submission limits
+	api.POST("/hackathons/:hackathonId/submission-limits", submissionLimitHandler.Create, adminOrOrganizer)
+	api.GET("/hackathons/:hackathonId/submission-limits", submissionLimitHandler.Get)
+	api.PUT("/hackathons/:hackathonId/submission-limits", submissionLimitHandler.Update, adminOrOrganizer)
+	api.DELETE("/hackathons/:hackathonId/submission-limits", submissionLimitHandler.Delete, adminOrOrganizer)
 
 	// Governance & audit
 	api.POST("/hackathons/:hackathonId/reports", governanceHandler.CreateReport)

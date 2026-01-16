@@ -37,11 +37,16 @@ This doc summarizes what changed in the hackathon-service for Milestone 2 and ho
 - Reports, appeals, and audit logs persisted.
 - Audit logs generated for all key state changes and orchestration actions.
 
-8) Events (NATS JetStream)
+8) Data and evaluation definitions
+- Dataset metadata, files, and variable dictionary are stored per hackathon.
+- Response schema captured to document expected prediction targets.
+- Evaluation metrics and submission limits stored for downstream services.
+
+9) Events (NATS JetStream)
 - Emits domain events for downstream services to react to.
 - Subjects configurable via env; JetStream stream defaults to SENTIO_EVENTS.
 
-9) Identity and authorization
+10) Identity and authorization
 - Keycloak JWT validation via JWKS (no identity ownership).
 - Role-based enforcement for admin/organizer operations and evaluation callbacks.
 
@@ -112,6 +117,43 @@ Resources and governance
 - POST /appeals (authenticated)
 - GET /audit/hackathons/{hackathonId} (admin/organizer)
 
+Data (datasets, files, variables)
+- POST /hackathons/{hackathonId}/data (admin/organizer)
+- GET /hackathons/{hackathonId}/data (authenticated)
+- PUT /hackathons/{hackathonId}/data (admin/organizer)
+- DELETE /hackathons/{hackathonId}/data (admin/organizer)
+- POST /hackathons/{hackathonId}/data/files (admin/organizer)
+- GET /hackathons/{hackathonId}/data/files (authenticated)
+- GET /hackathons/{hackathonId}/data/files/{fileId} (authenticated)
+- PUT /hackathons/{hackathonId}/data/files/{fileId} (admin/organizer)
+- DELETE /hackathons/{hackathonId}/data/files/{fileId} (admin/organizer)
+- POST /hackathons/{hackathonId}/data/variables (admin/organizer)
+- GET /hackathons/{hackathonId}/data/variables (authenticated)
+- GET /hackathons/{hackathonId}/data/variables/{variableId} (authenticated)
+- PUT /hackathons/{hackathonId}/data/variables/{variableId} (admin/organizer)
+- DELETE /hackathons/{hackathonId}/data/variables/{variableId} (admin/organizer)
+
+Data notes
+- Dataset supports `source_urls` (dataset/bucket links).
+- `response_schema` captures target variables + submission format hints.
+
+Evaluation metrics
+- POST /hackathons/{hackathonId}/metrics (admin/organizer)
+- GET /hackathons/{hackathonId}/metrics (authenticated)
+- GET /hackathons/{hackathonId}/metrics/{metricId} (authenticated)
+- PUT /hackathons/{hackathonId}/metrics/{metricId} (admin/organizer)
+- DELETE /hackathons/{hackathonId}/metrics/{metricId} (admin/organizer)
+
+Metric notes
+- `scope`: `overall` or `per_target`.
+- `target_variable` required for `per_target`.
+
+Submission limits
+- POST /hackathons/{hackathonId}/submission-limits (admin/organizer)
+- GET /hackathons/{hackathonId}/submission-limits (authenticated)
+- PUT /hackathons/{hackathonId}/submission-limits (admin/organizer)
+- DELETE /hackathons/{hackathonId}/submission-limits (admin/organizer)
+
 ## Events emitted (contract)
 - hackathon.created
 - hackathon.published
@@ -128,11 +170,28 @@ Resources and governance
 - leaderboard.freeze.requested
 - leaderboard.unfreeze.requested
 - leaderboard.publish.requested
+- hackathon.data.created
+- hackathon.data.updated
+- hackathon.data.deleted
+- hackathon.data.file.created
+- hackathon.data.file.updated
+- hackathon.data.file.deleted
+- hackathon.data.variable.created
+- hackathon.data.variable.updated
+- hackathon.data.variable.deleted
+- hackathon.metric.created
+- hackathon.metric.updated
+- hackathon.metric.deleted
+- hackathon.submission_limits.created
+- hackathon.submission_limits.updated
+- hackathon.submission_limits.deleted
 
 ## Data model changes
 - UUID primary keys for all core entities.
 - Rule versions include status (draft/locked) and lock timestamp.
 - Audit logs persist action history for lifecycle and governance.
+- Dataset metadata, files, and variable dictionary stored per hackathon.
+- Evaluation metrics and submission limits stored per hackathon.
 
 ## Out of scope (by design)
 - Team creation/joining/matching (handled by team-service).

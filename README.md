@@ -11,6 +11,7 @@ Owns lifecycle, rules, tracks, submission intent, governance, and event emission
 - Added team policy + validation endpoints (integration only).
 - Added leaderboard integration hooks (freeze/unfreeze/publish) with events.
 - Added governance (reports, appeals, audit logs).
+- Added dataset metadata (including source URLs), files, variables, evaluation metrics, and submission limits.
 - Emitted NATS JetStream events for all domain actions; added subjects/envs.
 - Switched to UUID primary keys across models and schema.
 - Improved validation and error responses for clearer client feedback.
@@ -79,6 +80,44 @@ Resources & audit:
 - POST /appeals
 - GET /audit/hackathons/{hackathonId}
 
+Data (datasets, files, variables):
+- POST /hackathons/{hackathonId}/data
+- GET /hackathons/{hackathonId}/data
+- PUT /hackathons/{hackathonId}/data
+- DELETE /hackathons/{hackathonId}/data
+- POST /hackathons/{hackathonId}/data/files
+- GET /hackathons/{hackathonId}/data/files
+- GET /hackathons/{hackathonId}/data/files/{fileId}
+- PUT /hackathons/{hackathonId}/data/files/{fileId}
+- DELETE /hackathons/{hackathonId}/data/files/{fileId}
+- POST /hackathons/{hackathonId}/data/variables
+- GET /hackathons/{hackathonId}/data/variables
+- GET /hackathons/{hackathonId}/data/variables/{variableId}
+- PUT /hackathons/{hackathonId}/data/variables/{variableId}
+- DELETE /hackathons/{hackathonId}/data/variables/{variableId}
+
+Data notes:
+- `source_urls` holds dataset/bucket links (e.g., GCS).
+- `response_schema` lists target variables and submission format hints.
+- Variables use `role` (feature/target/identifier) + optional `category`.
+
+Evaluation metrics:
+- POST /hackathons/{hackathonId}/metrics
+- GET /hackathons/{hackathonId}/metrics
+- GET /hackathons/{hackathonId}/metrics/{metricId}
+- PUT /hackathons/{hackathonId}/metrics/{metricId}
+- DELETE /hackathons/{hackathonId}/metrics/{metricId}
+
+Metric notes:
+- `scope`: `overall` or `per_target`.
+- `target_variable` is required for `per_target`.
+
+Submission limits:
+- POST /hackathons/{hackathonId}/submission-limits
+- GET /hackathons/{hackathonId}/submission-limits
+- PUT /hackathons/{hackathonId}/submission-limits
+- DELETE /hackathons/{hackathonId}/submission-limits
+
 ## Auth (Keycloak JWKS)
 - AUTH_REQUIRED (default: true)
 - AUTH_JWKS_URL (required when AUTH_REQUIRED=true)
@@ -114,6 +153,21 @@ Env:
 - NATS_SUBJECT_HACKATHON_PUBLISHED (default: hackathon.published)
 - NATS_SUBJECT_HACKATHON_PHASE_CHANGED (default: hackathon.phase.changed)
 - NATS_SUBJECT_HACKATHON_COMPLETED (default: hackathon.completed)
+- NATS_SUBJECT_HACKATHON_DATA_CREATED (default: hackathon.data.created)
+- NATS_SUBJECT_HACKATHON_DATA_UPDATED (default: hackathon.data.updated)
+- NATS_SUBJECT_HACKATHON_DATA_DELETED (default: hackathon.data.deleted)
+- NATS_SUBJECT_HACKATHON_DATA_FILE_CREATED (default: hackathon.data.file.created)
+- NATS_SUBJECT_HACKATHON_DATA_FILE_UPDATED (default: hackathon.data.file.updated)
+- NATS_SUBJECT_HACKATHON_DATA_FILE_DELETED (default: hackathon.data.file.deleted)
+- NATS_SUBJECT_HACKATHON_DATA_VARIABLE_CREATED (default: hackathon.data.variable.created)
+- NATS_SUBJECT_HACKATHON_DATA_VARIABLE_UPDATED (default: hackathon.data.variable.updated)
+- NATS_SUBJECT_HACKATHON_DATA_VARIABLE_DELETED (default: hackathon.data.variable.deleted)
+- NATS_SUBJECT_HACKATHON_METRIC_CREATED (default: hackathon.metric.created)
+- NATS_SUBJECT_HACKATHON_METRIC_UPDATED (default: hackathon.metric.updated)
+- NATS_SUBJECT_HACKATHON_METRIC_DELETED (default: hackathon.metric.deleted)
+- NATS_SUBJECT_SUBMISSION_LIMITS_CREATED (default: hackathon.submission_limits.created)
+- NATS_SUBJECT_SUBMISSION_LIMITS_UPDATED (default: hackathon.submission_limits.updated)
+- NATS_SUBJECT_SUBMISSION_LIMITS_DELETED (default: hackathon.submission_limits.deleted)
 - NATS_SUBJECT_SUBMISSION_CREATED (default: submission.created)
 - NATS_SUBJECT_SUBMISSION_LOCKED (default: submission.locked)
 - NATS_SUBJECT_SUBMISSION_INVALIDATED (default: submission.invalidated)
