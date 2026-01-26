@@ -1,3 +1,5 @@
+github.com/DataInCube/go-utils v0.0.0-20260126080416-06afe85ee8b5 h1:DJDebJoERiUq0m6XDK4XofctNVEoqQa99zsr/BVgpYM=
+github.com/DataInCube/go-utils v0.0.0-20260126080416-06afe85ee8b5/go.mod h1:rEqaVIryr6Kxgl3QBuNdeGyV+ZT8f/gdIZ+ZTxU2Fwc=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID3+o=

@@ -3,6 +3,7 @@ module github.com/DataInCube/hackathon-service
 go 1.24.3
 
 require (
+	github.com/DataInCube/go-utils v0.0.0-20260126080416-06afe85ee8b5
 	github.com/MicahParks/keyfunc v1.9.0
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.6.0
