@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/DataInCube/hackathon-service/api/services"
 	"github.com/DataInCube/hackathon-service/internal/models"
@@ -192,6 +193,33 @@ func (h *SubmissionHandler) updateEvaluationStatus(c echo.Context, target string
 	if err != nil {
 		return handleServiceError(err)
 	}
+	if target == models.SubmissionStatusScored {
+		payload := map[string]any{
+			"submission_id": updated.ID,
+			"hackathon_id":  updated.HackathonID,
+			"user_id":       updated.SubmittedBy,
+			"source":        "git",
+			"is_official":   true,
+			"is_practice":   false,
+			"evaluated_at":  time.Now().UTC().Format(time.RFC3339),
+		}
+		if updated.TeamID != nil && *updated.TeamID != "" {
+			payload["team_id"] = *updated.TeamID
+		}
+		if score, ok := extractScoreFromMetadata(updated.Metadata); ok {
+			payload["score"] = score
+		}
+		if metric := extractStringFromMetadata(updated.Metadata, "primary_metric", "metric"); metric != "" {
+			payload["primary_metric"] = metric
+		}
+		if commit := extractStringFromMetadata(updated.Metadata, "commit_sha", "commit", "git_commit"); commit != "" {
+			payload["commit_sha"] = commit
+		}
+		if boardType := extractStringFromMetadata(updated.Metadata, "board_type", "boardType"); boardType != "" {
+			payload["board_type"] = boardType
+		}
+		h.emit(c, "evaluation.completed", payload)
+	}
 	h.audit(c, updated.HackathonID, actorIDFromContext(c), "submission.evaluation."+target, updated)
 	return c.JSON(http.StatusOK, updated)
 }
@@ -216,4 +244,80 @@ func (h *SubmissionHandler) audit(c echo.Context, hackathonID, actorID, action s
 		Action:      action,
 		Payload:     raw,
 	})
+}
+
+func extractScoreFromMetadata(raw json.RawMessage) (float64, bool) {
+	if len(raw) == 0 {
+		return 0, false
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return 0, false
+	}
+	if score, ok := numericFrom(payload["score"]); ok {
+		return score, true
+	}
+	if metrics, ok := payload["metrics"].(map[string]any); ok {
+		if score, ok := numericFrom(metrics["score"]); ok {
+			return score, true
+		}
+		if score, ok := numericFrom(metrics["primary"]); ok {
+			return score, true
+		}
+		if score, ok := numericFrom(metrics["value"]); ok {
+			return score, true
+		}
+	}
+	if evaluation, ok := payload["evaluation"].(map[string]any); ok {
+		if score, ok := numericFrom(evaluation["score"]); ok {
+			return score, true
+		}
+	}
+	return 0, false
+}
+
+func extractStringFromMetadata(raw json.RawMessage, keys ...string) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return ""
+	}
+	for _, key := range keys {
+		if v, ok := payload[key]; ok {
+			if s, ok := v.(string); ok {
+				return s
+			}
+		}
+	}
+	if evaluation, ok := payload["evaluation"].(map[string]any); ok {
+		for _, key := range keys {
+			if v, ok := evaluation[key]; ok {
+				if s, ok := v.(string); ok {
+					return s
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func numericFrom(v any) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case float32:
+		return float64(n), true
+	case int:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	case json.Number:
+		f, err := n.Float64()
+		if err == nil {
+			return f, true
+		}
+	}
+	return 0, false
 }

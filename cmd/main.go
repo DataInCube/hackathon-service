@@ -130,6 +130,7 @@ func main() {
 			env.GetString("NATS_SUBJECT_SUBMISSION_CREATED", "submission.created"),
 			env.GetString("NATS_SUBJECT_SUBMISSION_LOCKED", "submission.locked"),
 			env.GetString("NATS_SUBJECT_SUBMISSION_INVALIDATED", "submission.invalidated"),
+			env.GetString("NATS_SUBJECT_EVALUATION_COMPLETED", "evaluation.completed"),
 			env.GetString("NATS_SUBJECT_LEADERBOARD_FREEZE", "leaderboard.freeze.requested"),
 			env.GetString("NATS_SUBJECT_LEADERBOARD_UNFREEZE", "leaderboard.unfreeze.requested"),
 			env.GetString("NATS_SUBJECT_LEADERBOARD_PUBLISH", "leaderboard.publish.requested"),
