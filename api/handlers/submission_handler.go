@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/DataInCube/hackathon-service/api/services"
@@ -194,20 +195,29 @@ func (h *SubmissionHandler) updateEvaluationStatus(c echo.Context, target string
 		return handleServiceError(err)
 	}
 	if target == models.SubmissionStatusScored {
+		metadataMap := metadataToMap(updated.Metadata)
+		secondary := extractSecondaryMetricsFromMetadata(updated.Metadata)
+		updatesLeaderboard := extractBoolFromMetadata(updated.Metadata, true, "updates_leaderboard", "updatesLeaderboard")
 		payload := map[string]any{
-			"submission_id": updated.ID,
-			"hackathon_id":  updated.HackathonID,
-			"user_id":       updated.SubmittedBy,
-			"source":        "git",
-			"is_official":   true,
-			"is_practice":   false,
-			"evaluated_at":  time.Now().UTC().Format(time.RFC3339),
+			"submission_id":       updated.ID,
+			"hackathon_id":        updated.HackathonID,
+			"user_id":             updated.SubmittedBy,
+			"source":              "git",
+			"is_official":         true,
+			"is_practice":         false,
+			"updates_leaderboard": updatesLeaderboard,
+			"evaluated_at":        time.Now().UTC().Format(time.RFC3339),
+			"metadata":            metadataMap,
 		}
 		if updated.TeamID != nil && *updated.TeamID != "" {
 			payload["team_id"] = *updated.TeamID
 		}
 		if score, ok := extractScoreFromMetadata(updated.Metadata); ok {
 			payload["score"] = score
+			payload["scores"] = map[string]any{
+				"primary":   score,
+				"secondary": secondary,
+			}
 		}
 		if metric := extractStringFromMetadata(updated.Metadata, "primary_metric", "metric"); metric != "" {
 			payload["primary_metric"] = metric
@@ -217,6 +227,15 @@ func (h *SubmissionHandler) updateEvaluationStatus(c echo.Context, target string
 		}
 		if boardType := extractStringFromMetadata(updated.Metadata, "board_type", "boardType"); boardType != "" {
 			payload["board_type"] = boardType
+		}
+		if submittedAt := extractStringFromMetadata(updated.Metadata, "submitted_at", "submission_time", "created_at"); submittedAt != "" {
+			payload["submission_time"] = submittedAt
+		}
+		if evaluationJobID := extractStringFromMetadata(updated.Metadata, "evaluation_job_id", "job_id"); evaluationJobID != "" {
+			payload["evaluation_job_id"] = evaluationJobID
+		}
+		if practiceJobID := extractStringFromMetadata(updated.Metadata, "practice_job_id", "last_practice_job_id"); practiceJobID != "" {
+			payload["practice_job_id"] = practiceJobID
 		}
 		h.emit(c, "evaluation.completed", payload)
 	}
@@ -287,7 +306,7 @@ func extractStringFromMetadata(raw json.RawMessage, keys ...string) string {
 	for _, key := range keys {
 		if v, ok := payload[key]; ok {
 			if s, ok := v.(string); ok {
-				return s
+				return strings.TrimSpace(s)
 			}
 		}
 	}
@@ -295,12 +314,81 @@ func extractStringFromMetadata(raw json.RawMessage, keys ...string) string {
 		for _, key := range keys {
 			if v, ok := evaluation[key]; ok {
 				if s, ok := v.(string); ok {
-					return s
+					return strings.TrimSpace(s)
 				}
 			}
 		}
 	}
 	return ""
+}
+
+func extractSecondaryMetricsFromMetadata(raw json.RawMessage) map[string]any {
+	if len(raw) == 0 {
+		return map[string]any{}
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return map[string]any{}
+	}
+	if scores, ok := payload["scores"].(map[string]any); ok {
+		if secondary, ok := scores["secondary"].(map[string]any); ok {
+			return secondary
+		}
+	}
+	for _, key := range []string{"efficiency_metrics", "secondary_metrics", "metrics_secondary"} {
+		if secondary, ok := payload[key].(map[string]any); ok {
+			return secondary
+		}
+	}
+	if evaluation, ok := payload["evaluation"].(map[string]any); ok {
+		if secondary, ok := evaluation["secondary"].(map[string]any); ok {
+			return secondary
+		}
+		if secondary, ok := evaluation["efficiency_metrics"].(map[string]any); ok {
+			return secondary
+		}
+	}
+	return map[string]any{}
+}
+
+func extractBoolFromMetadata(raw json.RawMessage, fallback bool, keys ...string) bool {
+	if len(raw) == 0 {
+		return fallback
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return fallback
+	}
+	for _, key := range keys {
+		value, ok := payload[key]
+		if !ok {
+			continue
+		}
+		switch typed := value.(type) {
+		case bool:
+			return typed
+		case string:
+			lower := strings.ToLower(strings.TrimSpace(typed))
+			if lower == "true" || lower == "1" || lower == "yes" {
+				return true
+			}
+			if lower == "false" || lower == "0" || lower == "no" {
+				return false
+			}
+		}
+	}
+	return fallback
+}
+
+func metadataToMap(raw json.RawMessage) map[string]any {
+	if len(raw) == 0 {
+		return map[string]any{}
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return map[string]any{}
+	}
+	return payload
 }
 
 func numericFrom(v any) (float64, bool) {
