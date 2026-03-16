@@ -107,39 +107,7 @@ func main() {
 	if env.GetBool("EVENTS_ENABLED", true) {
 		natsURL := env.GetString("NATS_URL", "nats://nats:4222")
 		stream := env.GetString("NATS_STREAM", "SENTIO_EVENTS")
-		subjects := []string{
-			env.GetString("NATS_SUBJECT_HACKATHON_CREATED", "hackathon.created"),
-			env.GetString("NATS_SUBJECT_HACKATHON_PUBLISHED", "hackathon.published"),
-			env.GetString("NATS_SUBJECT_HACKATHON_PHASE_CHANGED", "hackathon.phase.changed"),
-			env.GetString("NATS_SUBJECT_HACKATHON_COMPLETED", "hackathon.completed"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_CREATED", "hackathon.data.created"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_UPDATED", "hackathon.data.updated"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_DELETED", "hackathon.data.deleted"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_FILE_CREATED", "hackathon.data.file.created"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_FILE_UPDATED", "hackathon.data.file.updated"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_FILE_DELETED", "hackathon.data.file.deleted"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_CREATED", "hackathon.data.variable.created"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_UPDATED", "hackathon.data.variable.updated"),
-			env.GetString("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_DELETED", "hackathon.data.variable.deleted"),
-			env.GetString("NATS_SUBJECT_HACKATHON_METRIC_CREATED", "hackathon.metric.created"),
-			env.GetString("NATS_SUBJECT_HACKATHON_METRIC_UPDATED", "hackathon.metric.updated"),
-			env.GetString("NATS_SUBJECT_HACKATHON_METRIC_DELETED", "hackathon.metric.deleted"),
-			env.GetString("NATS_SUBJECT_SUBMISSION_LIMITS_CREATED", "hackathon.submission_limits.created"),
-			env.GetString("NATS_SUBJECT_SUBMISSION_LIMITS_UPDATED", "hackathon.submission_limits.updated"),
-			env.GetString("NATS_SUBJECT_SUBMISSION_LIMITS_DELETED", "hackathon.submission_limits.deleted"),
-			env.GetString("NATS_SUBJECT_SUBMISSION_CREATED", "submission.created"),
-			env.GetString("NATS_SUBJECT_SUBMISSION_LOCKED", "submission.locked"),
-			env.GetString("NATS_SUBJECT_SUBMISSION_INVALIDATED", "submission.invalidated"),
-			env.GetString("NATS_SUBJECT_EVALUATION_COMPLETED", "evaluation.completed"),
-			env.GetString("NATS_SUBJECT_LEADERBOARD_FREEZE", "leaderboard.freeze.requested"),
-			env.GetString("NATS_SUBJECT_LEADERBOARD_UNFREEZE", "leaderboard.unfreeze.requested"),
-			env.GetString("NATS_SUBJECT_LEADERBOARD_PUBLISH", "leaderboard.publish.requested"),
-			env.GetString("NATS_SUBJECT_TEAM_REQUIRED", "hackathon.team.required"),
-			env.GetString("NATS_SUBJECT_TEAM_LOCKED", "hackathon.team.locked"),
-			env.GetString("NATS_SUBJECT_RULE_CREATED", "hackathon.rule.created"),
-			env.GetString("NATS_SUBJECT_RULE_VERSION_LOCKED", "hackathon.rule.version.locked"),
-			env.GetString("NATS_SUBJECT_RULE_ACTIVATED", "hackathon.rule.activated"),
-		}
+		subjects := eventSubjectsFromEnv(env.GetString)
 		natsPublisher, err := events.NewNatsPublisher(natsURL, stream, stringsx.UniqueStrings(subjects))
 		if err != nil {
 			logger.Fatal("Failed to connect to NATS: ", err)
@@ -167,4 +135,40 @@ func main() {
 	}
 	e.Logger.Fatal(e.StartServer(server))
 
+}
+
+func eventSubjectsFromEnv(get func(string, string) string) []string {
+	return []string{
+		get("NATS_SUBJECT_HACKATHON_CREATED", "hackathon.created"),
+		get("NATS_SUBJECT_HACKATHON_PUBLISHED", "hackathon.published"),
+		get("NATS_SUBJECT_HACKATHON_PHASE_CHANGED", "hackathon.phase.changed"),
+		get("NATS_SUBJECT_HACKATHON_COMPLETED", "hackathon.completed"),
+		get("NATS_SUBJECT_HACKATHON_DATA_CREATED", "hackathon.data.created"),
+		get("NATS_SUBJECT_HACKATHON_DATA_UPDATED", "hackathon.data.updated"),
+		get("NATS_SUBJECT_HACKATHON_DATA_DELETED", "hackathon.data.deleted"),
+		get("NATS_SUBJECT_HACKATHON_DATA_FILE_CREATED", "hackathon.data.file.created"),
+		get("NATS_SUBJECT_HACKATHON_DATA_FILE_UPDATED", "hackathon.data.file.updated"),
+		get("NATS_SUBJECT_HACKATHON_DATA_FILE_DELETED", "hackathon.data.file.deleted"),
+		get("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_CREATED", "hackathon.data.variable.created"),
+		get("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_UPDATED", "hackathon.data.variable.updated"),
+		get("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_DELETED", "hackathon.data.variable.deleted"),
+		get("NATS_SUBJECT_HACKATHON_METRIC_CREATED", "hackathon.metric.created"),
+		get("NATS_SUBJECT_HACKATHON_METRIC_UPDATED", "hackathon.metric.updated"),
+		get("NATS_SUBJECT_HACKATHON_METRIC_DELETED", "hackathon.metric.deleted"),
+		get("NATS_SUBJECT_SUBMISSION_LIMITS_CREATED", "hackathon.submission_limits.created"),
+		get("NATS_SUBJECT_SUBMISSION_LIMITS_UPDATED", "hackathon.submission_limits.updated"),
+		get("NATS_SUBJECT_SUBMISSION_LIMITS_DELETED", "hackathon.submission_limits.deleted"),
+		get("NATS_SUBJECT_SUBMISSION_CREATED", "submission.created"),
+		get("NATS_SUBJECT_SUBMISSION_LOCKED", "submission.locked"),
+		get("NATS_SUBJECT_SUBMISSION_INVALIDATED", "submission.invalidated"),
+		get("NATS_SUBJECT_EVALUATION_COMPLETED", "evaluation.completed"),
+		get("NATS_SUBJECT_LEADERBOARD_FREEZE", "leaderboard.freeze.requested"),
+		get("NATS_SUBJECT_LEADERBOARD_UNFREEZE", "leaderboard.unfreeze.requested"),
+		get("NATS_SUBJECT_LEADERBOARD_PUBLISH", "leaderboard.publish.requested"),
+		get("NATS_SUBJECT_TEAM_REQUIRED", "hackathon.team.required"),
+		get("NATS_SUBJECT_TEAM_LOCKED", "hackathon.team.locked"),
+		get("NATS_SUBJECT_RULE_CREATED", "hackathon.rule.created"),
+		get("NATS_SUBJECT_RULE_VERSION_LOCKED", "hackathon.rule.version.locked"),
+		get("NATS_SUBJECT_RULE_ACTIVATED", "hackathon.rule.activated"),
+	}
 }
