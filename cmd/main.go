@@ -3,15 +3,14 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
+	dbutils "github.com/DataInCube/go-utils/db"
+	"github.com/DataInCube/go-utils/env"
+	"github.com/DataInCube/go-utils/stringsx"
 	"github.com/DataInCube/hackathon-service/api/middlewares"
 	"github.com/DataInCube/hackathon-service/api/routes"
 	"github.com/DataInCube/hackathon-service/pkg/events"
-	"github.com/DataInCube/hackathon-service/pkg/utils"
 
 	_ "github.com/DataInCube/hackathon-service/docs"
 	"github.com/joho/godotenv"
@@ -36,10 +35,10 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	serviceName := getEnv("SERVICE_NAME", "hackathon-service")
-	serviceVersion := getEnv("SERVICE_VERSION", "dev")
+	serviceName := env.GetString("SERVICE_NAME", "hackathon-service")
+	serviceVersion := env.GetString("SERVICE_VERSION", "dev")
 
-	foundationMode := isTruthy(getEnv("FOUNDATION_MODE", "false"))
+	foundationMode := env.GetBool("FOUNDATION_MODE", false)
 	if foundationMode {
 		e := echo.New()
 
@@ -50,33 +49,38 @@ func main() {
 			return c.JSON(200, map[string]string{"service": serviceName, "version": serviceVersion})
 		})
 
-		port := getEnv("PORT", "8081")
+		port := env.GetString("PORT", "8081")
 		logger.Infof("Hackathon Service (foundation mode) running on port %s", port)
 		e.Logger.Fatal(e.Start(":" + port))
 		return
 	}
 
 	// Load DB config
-	driver := getEnv("DB_DRIVER", "postgres")
-	dsn := getEnv("DB_DSN", "")
+	driver := env.GetString("DB_DRIVER", "postgres")
+	dsn := env.GetString("DB_DSN", "")
 	if dsn == "" {
-		host := getEnv("DB_HOST", "localhost")
-		port := getEnv("DB_PORT", "5432")
-		user := getEnv("DB_USER", "postgres")
-		password := getEnv("DB_PASSWORD", "postgres")
-		name := getEnv("DB_NAME", "hackathondb")
-		sslMode := getEnv("DB_SSLMODE", "disable")
+		host := env.GetString("DB_HOST", "localhost")
+		port := env.GetString("DB_PORT", "5432")
+		user := env.GetString("DB_USER", "postgres")
+		password := env.GetString("DB_PASSWORD", "postgres")
+		name := env.GetString("DB_NAME", "hackathondb")
+		sslMode := env.GetString("DB_SSLMODE", "disable")
 		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, name, sslMode)
 	}
 
 	// Init DB
-	maxOpenConns := getEnvInt("DB_MAX_OPEN_CONNS", 10)
-	maxIdleConns := getEnvInt("DB_MAX_IDLE_CONNS", 5)
-	connMaxLifetime := time.Duration(getEnvInt("DB_CONN_MAX_LIFETIME_MINUTES", 30)) * time.Minute
-	db, err := utils.NewDB(driver, dsn, maxOpenConns, maxIdleConns, connMaxLifetime, logger)
+	maxOpenConns := env.GetInt("DB_MAX_OPEN_CONNS", 10)
+	maxIdleConns := env.GetInt("DB_MAX_IDLE_CONNS", 5)
+	connMaxLifetime := time.Duration(env.GetInt("DB_CONN_MAX_LIFETIME_MINUTES", 30)) * time.Minute
+	db, err := dbutils.Connect(driver, dsn, dbutils.PoolConfig{
+		MaxOpenConns:    maxOpenConns,
+		MaxIdleConns:    maxIdleConns,
+		ConnMaxLifetime: connMaxLifetime,
+	})
 	if err != nil {
 		logger.Fatal("Failed to connect to DB: ", err)
 	}
+	logger.Println("✅ Connected to PostgreSQL database")
 
 	// Echo instance
 	e := echo.New()
@@ -87,11 +91,11 @@ func main() {
 	// e.Use(middlewares.RecoverMiddleware(logger)) // Recover from panics
 
 	authCfg := middlewares.JWTConfig{
-		JWKSURL:  getEnv("AUTH_JWKS_URL", ""),
-		Issuer:   getEnv("AUTH_ISSUER", ""),
-		Audience: getEnv("AUTH_AUDIENCE", ""),
-		ClientID: getEnv("AUTH_CLIENT_ID", ""),
-		Required: isTruthy(getEnv("AUTH_REQUIRED", "true")),
+		JWKSURL:  env.GetString("AUTH_JWKS_URL", ""),
+		Issuer:   env.GetString("AUTH_ISSUER", ""),
+		Audience: env.GetString("AUTH_AUDIENCE", ""),
+		ClientID: env.GetString("AUTH_CLIENT_ID", ""),
+		Required: env.GetBool("AUTH_REQUIRED", true),
 	}
 
 	authMiddleware, err := middlewares.AuthMiddleware(authCfg, logger)
@@ -100,42 +104,11 @@ func main() {
 	}
 
 	var publisher events.Publisher
-	if isTruthy(getEnv("EVENTS_ENABLED", "true")) {
-		natsURL := getEnv("NATS_URL", "nats://nats:4222")
-		stream := getEnv("NATS_STREAM", "SENTIO_EVENTS")
-		subjects := []string{
-			getEnv("NATS_SUBJECT_HACKATHON_CREATED", "hackathon.created"),
-			getEnv("NATS_SUBJECT_HACKATHON_PUBLISHED", "hackathon.published"),
-			getEnv("NATS_SUBJECT_HACKATHON_PHASE_CHANGED", "hackathon.phase.changed"),
-			getEnv("NATS_SUBJECT_HACKATHON_COMPLETED", "hackathon.completed"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_CREATED", "hackathon.data.created"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_UPDATED", "hackathon.data.updated"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_DELETED", "hackathon.data.deleted"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_FILE_CREATED", "hackathon.data.file.created"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_FILE_UPDATED", "hackathon.data.file.updated"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_FILE_DELETED", "hackathon.data.file.deleted"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_CREATED", "hackathon.data.variable.created"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_UPDATED", "hackathon.data.variable.updated"),
-			getEnv("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_DELETED", "hackathon.data.variable.deleted"),
-			getEnv("NATS_SUBJECT_HACKATHON_METRIC_CREATED", "hackathon.metric.created"),
-			getEnv("NATS_SUBJECT_HACKATHON_METRIC_UPDATED", "hackathon.metric.updated"),
-			getEnv("NATS_SUBJECT_HACKATHON_METRIC_DELETED", "hackathon.metric.deleted"),
-			getEnv("NATS_SUBJECT_SUBMISSION_LIMITS_CREATED", "hackathon.submission_limits.created"),
-			getEnv("NATS_SUBJECT_SUBMISSION_LIMITS_UPDATED", "hackathon.submission_limits.updated"),
-			getEnv("NATS_SUBJECT_SUBMISSION_LIMITS_DELETED", "hackathon.submission_limits.deleted"),
-			getEnv("NATS_SUBJECT_SUBMISSION_CREATED", "submission.created"),
-			getEnv("NATS_SUBJECT_SUBMISSION_LOCKED", "submission.locked"),
-			getEnv("NATS_SUBJECT_SUBMISSION_INVALIDATED", "submission.invalidated"),
-			getEnv("NATS_SUBJECT_LEADERBOARD_FREEZE", "leaderboard.freeze.requested"),
-			getEnv("NATS_SUBJECT_LEADERBOARD_UNFREEZE", "leaderboard.unfreeze.requested"),
-			getEnv("NATS_SUBJECT_LEADERBOARD_PUBLISH", "leaderboard.publish.requested"),
-			getEnv("NATS_SUBJECT_TEAM_REQUIRED", "hackathon.team.required"),
-			getEnv("NATS_SUBJECT_TEAM_LOCKED", "hackathon.team.locked"),
-			getEnv("NATS_SUBJECT_RULE_CREATED", "hackathon.rule.created"),
-			getEnv("NATS_SUBJECT_RULE_VERSION_LOCKED", "hackathon.rule.version.locked"),
-			getEnv("NATS_SUBJECT_RULE_ACTIVATED", "hackathon.rule.activated"),
-		}
-		natsPublisher, err := events.NewNatsPublisher(natsURL, stream, uniqueStrings(subjects))
+	if env.GetBool("EVENTS_ENABLED", true) {
+		natsURL := env.GetString("NATS_URL", "nats://nats:4222")
+		stream := env.GetString("NATS_STREAM", "SENTIO_EVENTS")
+		subjects := eventSubjectsFromEnv(env.GetString)
+		natsPublisher, err := events.NewNatsPublisher(natsURL, stream, stringsx.UniqueStrings(subjects))
 		if err != nil {
 			logger.Fatal("Failed to connect to NATS: ", err)
 		}
@@ -151,7 +124,7 @@ func main() {
 	// e.GET("/api/v1/swagger/*", echoSwagger.WrapHandler(echoSwagger.Name("Hackathon API")))
 
 	// Start server
-	port := getEnv("PORT", "8081")
+	port := env.GetString("PORT", "8081")
 	logger.Infof("Hackathon Service running on port %s", port)
 	server := &http.Server{
 		Addr:         ":" + port,
@@ -164,43 +137,38 @@ func main() {
 
 }
 
-func getEnv(key, fallback string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
+func eventSubjectsFromEnv(get func(string, string) string) []string {
+	return []string{
+		get("NATS_SUBJECT_HACKATHON_CREATED", "hackathon.created"),
+		get("NATS_SUBJECT_HACKATHON_PUBLISHED", "hackathon.published"),
+		get("NATS_SUBJECT_HACKATHON_PHASE_CHANGED", "hackathon.phase.changed"),
+		get("NATS_SUBJECT_HACKATHON_COMPLETED", "hackathon.completed"),
+		get("NATS_SUBJECT_HACKATHON_DATA_CREATED", "hackathon.data.created"),
+		get("NATS_SUBJECT_HACKATHON_DATA_UPDATED", "hackathon.data.updated"),
+		get("NATS_SUBJECT_HACKATHON_DATA_DELETED", "hackathon.data.deleted"),
+		get("NATS_SUBJECT_HACKATHON_DATA_FILE_CREATED", "hackathon.data.file.created"),
+		get("NATS_SUBJECT_HACKATHON_DATA_FILE_UPDATED", "hackathon.data.file.updated"),
+		get("NATS_SUBJECT_HACKATHON_DATA_FILE_DELETED", "hackathon.data.file.deleted"),
+		get("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_CREATED", "hackathon.data.variable.created"),
+		get("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_UPDATED", "hackathon.data.variable.updated"),
+		get("NATS_SUBJECT_HACKATHON_DATA_VARIABLE_DELETED", "hackathon.data.variable.deleted"),
+		get("NATS_SUBJECT_HACKATHON_METRIC_CREATED", "hackathon.metric.created"),
+		get("NATS_SUBJECT_HACKATHON_METRIC_UPDATED", "hackathon.metric.updated"),
+		get("NATS_SUBJECT_HACKATHON_METRIC_DELETED", "hackathon.metric.deleted"),
+		get("NATS_SUBJECT_SUBMISSION_LIMITS_CREATED", "hackathon.submission_limits.created"),
+		get("NATS_SUBJECT_SUBMISSION_LIMITS_UPDATED", "hackathon.submission_limits.updated"),
+		get("NATS_SUBJECT_SUBMISSION_LIMITS_DELETED", "hackathon.submission_limits.deleted"),
+		get("NATS_SUBJECT_SUBMISSION_CREATED", "submission.created"),
+		get("NATS_SUBJECT_SUBMISSION_LOCKED", "submission.locked"),
+		get("NATS_SUBJECT_SUBMISSION_INVALIDATED", "submission.invalidated"),
+		get("NATS_SUBJECT_EVALUATION_COMPLETED", "evaluation.completed"),
+		get("NATS_SUBJECT_LEADERBOARD_FREEZE", "leaderboard.freeze.requested"),
+		get("NATS_SUBJECT_LEADERBOARD_UNFREEZE", "leaderboard.unfreeze.requested"),
+		get("NATS_SUBJECT_LEADERBOARD_PUBLISH", "leaderboard.publish.requested"),
+		get("NATS_SUBJECT_TEAM_REQUIRED", "hackathon.team.required"),
+		get("NATS_SUBJECT_TEAM_LOCKED", "hackathon.team.locked"),
+		get("NATS_SUBJECT_RULE_CREATED", "hackathon.rule.created"),
+		get("NATS_SUBJECT_RULE_VERSION_LOCKED", "hackathon.rule.version.locked"),
+		get("NATS_SUBJECT_RULE_ACTIVATED", "hackathon.rule.activated"),
 	}
-	return fallback
-}
-
-func getEnvInt(key string, fallback int) int {
-	if val := os.Getenv(key); val != "" {
-		if parsed, err := strconv.Atoi(val); err == nil {
-			return parsed
-		}
-	}
-	return fallback
-}
-
-func isTruthy(val string) bool {
-	switch strings.ToLower(strings.TrimSpace(val)) {
-	case "1", "true", "yes", "y", "on":
-		return true
-	default:
-		return false
-	}
-}
-
-func uniqueStrings(in []string) []string {
-	seen := make(map[string]struct{}, len(in))
-	out := make([]string, 0, len(in))
-	for _, v := range in {
-		if v == "" {
-			continue
-		}
-		if _, ok := seen[v]; ok {
-			continue
-		}
-		seen[v] = struct{}{}
-		out = append(out, v)
-	}
-	return out
 }
